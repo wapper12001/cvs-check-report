@@ -46,7 +46,7 @@
       box-shadow: 0 4px 14px rgba(26,107,60,.12);
     }
     label.field { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    input[type="text"], input[type="date"], input[type="tel"], textarea {
+    input[type="text"], input[type="date"], input[type="tel"], textarea, select {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -154,6 +154,27 @@
   </header>
 
   <div class="card">
+    <h2>점포 / 근무 시간대</h2>
+    <p class="hint">점포와 시간대를 선택하면 해당 체크리스트로 바뀝니다.</p>
+    <div class="row">
+      <div>
+        <label class="field">점포명</label>
+        <select id="storeName">
+          <option value="default">기본 점포</option>
+        </select>
+      </div>
+      <div>
+        <label class="field">근무 시간대</label>
+        <select id="timeSlot">
+          <option value="day">주간</option>
+          <option value="evening">저녁</option>
+          <option value="night">야간</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>점장 연락처</h2>
     <p class="hint">한 번만 저장하면 다음부터 바로 보낼 수 있습니다.</p>
     <div class="row">
@@ -238,34 +259,49 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const TASKS = [
-      { key: "note", title: "인수인계", hint: "종이 노트 인수인계 사항과 인수인계 영수증을 찍어 보고", type: "handover" },
-      { key: "cig", title: "담배재고 체크", hint: "퇴근 전까지 틈틈히 조사한 뒤, 이상유무를 적은 노트 사진을 찍어 보고", type: "cig" },
-      { key: "dosirak", title: "도시락매대 정리정돈" },
-      { key: "clean", title: "청소", hint: "내부, 외부, 집기, 분리수거 등" },
-      { key: "rest1", title: "휴식", type: "rest" },
-      { key: "expire", title: "유통기한체크와 정리정돈" },
-      { key: "rest4", title: "휴식", type: "rest" },
-      { key: "inbound", title: "상품입고 전표 스캔 보고", hint: "입고 전표를 찍어 보고. 상품이 늦으면 이 항목과 분류·검수는 미루고 다음 순서를 진행", type: "inbound" },
-      { key: "sort", title: "분류와 보관", hint: "냉장은 냉장 워크인 보관, 냉동은 즉시 신속히 종이 검수 후 진열, 상온은 지정위치" },
-      { key: "rest2", title: "휴식", type: "rest" },
-      { key: "inspect", title: "검수와 진열" },
-      { key: "rest3", title: "휴식", type: "rest" },
-      { key: "refill", title: "팔린상품 보충과 정리정돈" },
-      { key: "rest5", title: "휴식", type: "rest" },
-      { key: "beforeOff", title: "퇴근 한시간 전 용도품 보충과 전체 매장 정리정돈" },
-      { key: "rest6", title: "휴식", type: "rest" },
-      { key: "adhoc", title: "수시업무", hint: "인사, 행사안내, 청소, 팔린상품 보충, 유통기한, 가격표/쇼카드. 술·담배는 신분증 확인. 신분증 거부 시 정중히 양해드리고 점장 영상통화 확인 후 판매. 플레이카드 사기 주의. 확인은 1577-3663 또는 점장 전화", type: "adhoc" },
-      { key: "off", title: "퇴근" }
-    ];
+    const CHECKLISTS = {
+      "default|day": [
+        { key: "note", title: "인수인계", hint: "종이 노트 인수인계 사항과 인수인계 영수증을 찍어 보고", type: "handover" },
+        { key: "cig", title: "담배재고 체크", hint: "퇴근 전까지 틈틈히 조사한 뒤, 이상유무를 적은 노트 사진을 찍어 보고", type: "cig" },
+        { key: "dosirak", title: "도시락매대 정리정돈" },
+        { key: "clean", title: "청소", hint: "내부, 외부, 집기, 분리수거 등" },
+        { key: "rest1", title: "휴식", type: "rest" },
+        { key: "expire", title: "유통기한체크와 정리정돈" },
+        { key: "rest4", title: "휴식", type: "rest" },
+        { key: "inbound", title: "상품입고 전표 스캔 보고", hint: "입고 전표를 찍어 보고. 상품이 늦으면 이 항목과 분류·검수는 미루고 다음 순서를 진행", type: "inbound" },
+        { key: "sort", title: "분류와 보관", hint: "냉장은 냉장 워크인 보관, 냉동은 즉시 신속히 종이 검수 후 진열, 상온은 지정위치" },
+        { key: "rest2", title: "휴식", type: "rest" },
+        { key: "inspect", title: "검수와 진열" },
+        { key: "rest3", title: "휴식", type: "rest" },
+        { key: "refill", title: "팔린상품 보충과 정리정돈" },
+        { key: "rest5", title: "휴식", type: "rest" },
+        { key: "beforeOff", title: "퇴근 한시간 전 용도품 보충과 전체 매장 정리정돈" },
+        { key: "rest6", title: "휴식", type: "rest" },
+        { key: "adhoc", title: "수시업무", hint: "인사, 행사안내, 청소, 팔린상품 보충, 유통기한, 가격표/쇼카드. 술·담배는 신분증 확인. 신분증 거부 시 정중히 양해드리고 점장 영상통화 확인 후 판매. 플레이카드 사기 주의. 확인은 1577-3663 또는 점장 전화", type: "adhoc" },
+        { key: "off", title: "퇴근" }
+      ]
+    };
 
+    let TASKS = [];
     const state = {};
     const photos = {};
-    TASKS.forEach(t => { state[t.key] = ""; photos[t.key] = []; });
 
     let camTarget = null;
     const DB_NAME = "cvs-check-db";
     let db = null;
+
+    function loadChecklist() {
+      const store = document.getElementById("storeName").value || "default";
+      const slot = document.getElementById("timeSlot").value || "day";
+      const key = store + "|" + slot;
+      TASKS = CHECKLISTS[key] || CHECKLISTS["default|day"] || [];
+      Object.keys(state).forEach(k => delete state[k]);
+      Object.keys(photos).forEach(k => delete photos[k]);
+      TASKS.forEach(t => { state[t.key] = ""; photos[t.key] = []; });
+      buildChecklist();
+      drawAllThumbs();
+      render();
+    }
 
     function taskByKey(key) {
       return TASKS.find(t => t.key === key) || { key, title: key };
@@ -642,6 +678,8 @@
 
     function saveMeta() {
       const data = {
+        storeName: document.getElementById("storeName").value,
+        timeSlot: document.getElementById("timeSlot").value,
         date: document.getElementById("date").value,
         name: document.getElementById("name").value,
         shift: document.getElementById("shift").value,
@@ -667,7 +705,7 @@
       if (!raw) return;
       try {
         const data = JSON.parse(raw);
-        ["date","name","shift","mgrName","mgrPhone","cigStart","cigMid","cigEnd","cigLack"].forEach(id => {
+        ["date","name","shift","mgrName","mgrPhone","storeName","timeSlot","cigStart","cigMid","cigEnd","cigLack"].forEach(id => {
           const el = document.getElementById(id);
           if (el && data[id]) el.value = data[id];
         });
@@ -834,8 +872,10 @@
     }
 
     async function init() {
+      document.getElementById("storeName").addEventListener("change", loadChecklist);
+      document.getElementById("timeSlot").addEventListener("change", loadChecklist);
+      loadChecklist();
       document.getElementById("date").value = new Date().toISOString().slice(0,10);
-      buildChecklist();
       loadMeta();
       restoreMarks();
       try {
@@ -843,7 +883,7 @@
         await loadPhotos();
         drawAllThumbs();
       } catch (e) {}
-      document.querySelectorAll("input, textarea").forEach(el => {
+      document.querySelectorAll("input, textarea, select").forEach(el => {
         el.addEventListener("input", () => { render(); saveMeta(); });
       });
       render();
